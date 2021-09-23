@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>感染性事件计算</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/Semantic-UI-CSS-master/semantic.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/Semantic-UI-CSS-master/semantic.css') }}">
+    <script src="{{ url_for('static', path='/jquery-3.5.1/jquery-3.5.1.min.js') }}"></script>
+    <script src="{{ url_for('static', path='/Semantic-UI-CSS-master/semantic.min.js') }}"></script>
+    <script src="{{ url_for('static', path='/Semantic-UI-CSS-master/semantic.js') }}"></script>
+
+
+<!--  <script>-->
+<!--        $(document).ready(function () {-->
+<!--            $("#ui primary submit button").click(function () {-->
+<!--                $.post("/compute", function (result) {-->
+<!--                    alert("Message: " + result.message);-->
+<!--                });-->
+<!--            });-->
+<!--        });-->
+
+
+<!--    </script>-->
+</head>
+
+<body>
+  <div class="ui container">
+    <br>
+    <div class="ui three item menu">
+        <a class="item active" name="menu1" >感染性事件计算</a>
+        <a class="item" name="menu2">结果展示</a>
+        <a class="item " name="menu3">待定</a>
+    </div>
+    <form class="ui form segment" action="/compute" method="post" name="param">
+<!--    <form class="ui loading form " action="/compute" method="post" name="param">-->
+      <p style="font-size:20px ">数据库连接</p>
+      <div class="two fields">
+        <div class="field">
+          <label>数据库类型</label>
+          <select class="ui dropdown" name="dbname">
+            <option value="oracle">oracle</option>
+            <option value="mysql">mysql</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>数据库驱动</label>
+          <select class="ui dropdown" name="dbdriver">
+            <option value="cx_oracle">cx_oracle</option>
+            <option value="mysqldb">mysqldb</option>
+          </select>
+        </div>
+      </div>
+      <br>
+      <div class="five fields">
+        <div class="field">
+          <label>数据库IP</label>
+          <input placeholder="数据库ip" name="dbhost" type="text">
+        </div>
+        <div class="field">
+          <label>数据库端口</label>
+          <input placeholder="数据库端口" name="dbport" type="text">
+        </div>
+        <div class="field">
+          <label>数据库连接用户名</label>
+          <input placeholder="数据库连接用户名" name="dbuser" type="text">
+        </div>
+        <div class="field">
+          <label>数据库连接密码</label>
+          <input placeholder="数据库连接密码" name="dbpasswd" type="password">
+        </div>
+        <div class="field">
+          <label>数据库连接实例名</label>
+          <input placeholder="数据库连接实例名" name="dborcl" type="text">
+        </div>
+      </div>
+      <br>
+      <p style="font-size:20px ">表输入</p>
+      <div class="field">
+        <label>患者基本信息</label>
+        <textarea placeholder="select CASEID,IN_TIME as 入院时间,OUT_TIME as 出院时间 from overall where OUT_TIME>=:1 and IN_TIME<=:2" name="cbasics" type="text"  rows="3">select CASEID,IN_TIME as 入院时间 ,OUT_TIME as 出院时间 from overall where OUT_TIME>=:1 and IN_TIME<=:2</textarea>
+      </div>
+      <div class="field">
+        <label>全身给药抗菌药物医嘱信息</label>
+        <textarea placeholder="select CASEID,ANAME as 抗菌药物,BEGINTIME as 医嘱开始时间,ENDTIME as 医嘱结束时间,ADMINISTRATION as 给药方式 from ANTIBIOTICS where caseid in (select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) and substr(BEGINTIME,1,4)>'1900' and substr(BEGINTIME,1,4)<'2022' and substr(ENDTIME,1,4)>'1900' and substr(ENDTIME,1,4)<'2022' order by BEGINTIME" name="antis" type="text" rows="3">select CASEID,ANAME as 抗菌药物,BEGINTIME as 医嘱开始时间,ENDTIME as 医嘱结束时间,ADMINISTRATION as 给药方式 from ANTIBIOTICS where caseid in (select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) and substr(BEGINTIME,1,4)>'1900' and substr(BEGINTIME,1,4)<'2022' and substr(ENDTIME,1,4)>'1900' and substr(ENDTIME,1,4)<'2022' order by BEGINTIME</textarea>
+      </div>
+      <div class="field">
+        <label>患者手术信息</label>
+        <textarea placeholder="select CASEID,BEGINTIME as 手术开始时间,OPER_NAME as 手术名称, ENDTIME as 手术结束时间 from OPER2 where caseid in (select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) and substr(BEGINTIME,1,4)>'1900' and substr(BEGINTIME,1,4)<'2022' and substr(ENDTIME,1,4)>'1900' and substr(ENDTIME,1,4)<'2022' order by BEGINTIME" name="opers" type="text"  rows="3">select CASEID,BEGINTIME as 手术开始时间,OPER_NAME as 手术名称, ENDTIME as 手术结束时间 from OPER2 where caseid in (select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) and substr(BEGINTIME,1,4)>'1900' and substr(BEGINTIME,1,4)<'2022' and substr(ENDTIME,1,4)>'1900' and substr(ENDTIME,1,4)<'2022' order by BEGINTIME</textarea>
+      </div>
+      <div class="field">
+        <label>患者体征信息</label>
+        <textarea placeholder="select CASEID,VALUE as 体温,RECORDDATE as 测量时间 from TEMPERATURE where caseid in (select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) order by RECORDDATE" name="temps" type="text" rows="3">select CASEID,VALUE as 体温,RECORDDATE as 测量时间 from TEMPERATURE where caseid in (select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) order by RECORDDATE</textarea>
+      </div>
+      <div class="field">
+        <label>患者菌检出信息</label>
+        <textarea placeholder="select CASEID,BACTERIA as 菌检出,REPORTTIME as 检出时间 from BACTERIA where caseid in (select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) order by REPORTTIME" name="bars" type="text" rows="3">select CASEID,BACTERIA as 菌检出,REPORTTIME as 检出时间 from BACTERIA where caseid in (select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) order by REPORTTIME</textarea>
+      </div>
+      <div class="field">
+        <label>患者转科信息</label>
+        <textarea placeholder="select CASEID,BEGINTIME as 入科时间,DEPT as 科室,ENDTIME as 出科时间 from department where caseid in(select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) order by BEGINTIME" name="departments" type="text" rows="3">select CASEID,BEGINTIME as 入科时间,DEPT as 科室,ENDTIME as 出科时间 from department where caseid in(select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) order by BEGINTIME</textarea>
+      </div>
+      <div class="field">
+        <label>抗菌药物名称</label>
+        <textarea placeholder="select distinct ANAME as 抗菌药物 from ANTIBIOTICS where caseid in (select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) and substr(BEGINTIME,1,4)>'1900' and substr(BEGINTIME,1,4)<'2022' and substr(ENDTIME,1,4)>'1900' and substr(ENDTIME,1,4)<'2022'" name="allantinames" type="text" rows="3">select distinct ANAME as 抗菌药物 from ANTIBIOTICS where caseid in (select CASEID from overall where OUT_TIME>=:1 and IN_TIME<=:2) and substr(BEGINTIME,1,4)>'1900' and substr(BEGINTIME,1,4)<'2022' and substr(ENDTIME,1,4)>'1900' and substr(ENDTIME,1,4)<'2022'</textarea>
+      </div>
+
+
+      <br>
+      <p style="font-size:20px ">统计时段信息（以月为单位进行）</p>
+      <div class="two fields">
+        <div class="field">
+          <label>统计开始时间</label>
+          <input placeholder="eg : 2019-01-01 00:00:00" name="begintime" type="date">
+        </div>
+        <div class="field">
+          <label>统计结束时间</label>
+          <input placeholder="eg : 2019-02-01 00:00:00" name="endtime" type="date">
+        </div>
+      </div>
+      <div class="field">
+        <label>计算进程数</label>
+        <input placeholder="eg : 1" name="process" type="text">
+      </div>
+
+      <div class="ui primary submit button">计算</div>
+      <div class="ui error message"></div>
+    </form>
+  </div>
+</body>
+
+<script>
+        $("[name='menu1']").click(function () {
+            console.log(123);
+            window.location.href = "http://" + window.location.host + "/test/1";
+        });
+        $("[name='menu2']").click(function () {
+            console.log(23);
+            window.location.href = "http://" + window.location.host + "/test/2";
+        });
+        $("[name='menu3']").click(function () {
+            console.log(3);
+            window.location.href = "http://" + window.location.host + "/test/3";
+        });
+<!--        function submitForm() {-->
+<!--            // jquery 表单提交-->
+<!--            $("#ui form segment").ajaxSubmit(function(message) {-->
+<!--                // 对于表单提交成功后处理，message为表单正常提交后返回的内容-->
+<!--                console.log(message);-->
+<!--            });-->
+<!--            return false; // 必须返回false，否则表单会自己再做一次提交操作，并且页面跳转-->
+<!--        };-->
+
+        $('.ui.form').form({
+            fields : {
+              dbhost: {
+                  identifier  : 'dbhost',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写数据库IP'
+                    }
+                  ]
+                },
+                dbport: {
+                  identifier  : 'dbport',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写数据库端口'
+                    }
+                  ]
+                },
+                dbuser: {
+                  identifier  : 'dbuser',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写数据库连接用户名'
+                    }
+                  ]
+                },
+                dbpasswd: {
+                  identifier  : 'dbpasswd',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写数据库连接密码'
+                    }
+                  ]
+                },
+                dborcl: {
+                  identifier  : 'dborcl',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写数据库连接实例名'
+                    }
+                  ]
+                },
+                cbasics: {
+                  identifier  : 'cbasics',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写表输入患者基本信息'
+                    }
+                  ]
+                },
+                antis: {
+                  identifier  : 'antis',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写表输入全身给药抗菌药物医嘱信息'
+                    }
+                  ]
+                },
+                opers: {
+                  identifier  : 'opers',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写表输入患者手术信息'
+                    }
+                  ]
+                },
+                temps: {
+                  identifier  : 'temps',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写表输入患者体征信息'
+                    }
+                  ]
+                },
+                bars: {
+                  identifier  : 'bars',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写表输入患者菌检出信息'
+                    }
+                  ]
+                },
+                departments: {
+                  identifier  : 'departments',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写表输入患者转科信息'
+                    }
+                  ]
+                },
+                allantinames: {
+                  identifier  : 'allantinames',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写表输入抗菌药物名称信息'
+                    }
+                  ]
+                },
+                begintime: {
+                  identifier  : 'begintime',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写表输入统计开始时间'
+                    }
+                  ]
+                },
+                endtime: {
+                  identifier  : 'endtime',
+                  rules: [
+                    {
+                      type   : 'empty',
+                      prompt : '请填写表输入统计结束时间'
+                    }
+                  ]
+                },
+                process : {
+                    identifier : 'process' ,
+                    rules : [{
+                        type : 'empty',
+                        prompt : '请填写计算进程数'}
+                    ]
+                }
+            }
+        });
+</script>
+
+</html>
